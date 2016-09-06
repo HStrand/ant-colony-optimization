@@ -19,9 +19,15 @@ cities = distances.columns.values
 for i in range(1,len(cities)):
     numerated[i] = cities[i]
 
-P = np.array([[INITIAL_PHEROMONE]*len(distances)]*len(distances)) # Initial transition matrix
-inverse_identity = 1 - np.identity(8) # Inverse identity matrix
-P = P*inverse_identity # Set diagonal to 0 to avoid transitions to current state
+inverse_identity = 1 - np.identity(len(distances)) # Inverse identity matrix
+
+def generate_matrix():
+	P = np.array([[INITIAL_PHEROMONE]*len(distances)]*len(distances)) # Initial transition matrix	
+	print(P)
+	P = P*inverse_identity # Set diagonal to 0 to avoid transitionss to current state
+	return P
+
+P = generate_matrix()
 
 """
 Helper functions
@@ -45,9 +51,10 @@ class Ant:
 		self.initial_location = initial_location
 		self.location = initial_location		
 		self.distance_travelled = 0
-		self.matrix = P 
+		self.matrix = np.empty_like(P)
+		self.matrix[:] = P
 		""" 
-		The ant keeps a copy of the transition matrix. 
+		The ant gets a copy of the transition matrix. 
 		This is also used to keep track of the places the ant has visited. 
 		THe initial location has to be the last stop.
 		"""
@@ -88,9 +95,29 @@ class Ant:
 		print("Path:", self.path)
 		print("Distance travelled:", self.distance_travelled, "km")
 
+		return self.path, self.distance_travelled
+
 
 if __name__ == '__main__':
 	start = time.time()
-	ant = Ant(0) # Start in Stavanger.
-	ant.march()
+	
+	initial_location = 0
+	colony = []
+
+	colony_best = 999999999
+	best_path = []
+
+	for i in range(COLONY_SIZE):
+		colony.append(Ant(initial_location))
+
+	for ant in colony:
+		result = ant.march()		
+		if(result[1]<colony_best):
+			colony_best = result[1]
+			best_path = result[0]
+
+	print("-----------------------")
+	print("Best path:", best_path)
+	print("Distance:", colony_best)
+
 	print("Time:", time.time()-start)
