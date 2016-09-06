@@ -21,7 +21,7 @@ for i in range(1,len(cities)):
 
 P = np.array([[INITIAL_PHEROMONE]*len(distances)]*len(distances)) # Initial transition matrix
 inverse_identity = 1 - np.identity(8) # Inverse identity matrix
-P = P*inverse_identity # Set diagonal to 0 to avoid transitionss to current state
+P = P*inverse_identity # Set diagonal to 0 to avoid transitions to current state
 
 """
 Helper functions
@@ -91,6 +91,6 @@ class Ant:
 
 if __name__ == '__main__':
 	start = time.time()
-	ant = Ant(0)
+	ant = Ant(0) # Start in Stavanger.
 	ant.march()
 	print("Time:", time.time()-start)
