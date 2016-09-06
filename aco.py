@@ -93,7 +93,9 @@ class Ant:
 		self.distance_travelled += distance
 		self.location = self.initial_location
 		print("Path:", self.path)
-		print("Distance travelled:", self.distance_travelled, "km")		
+		print("Distance travelled:", self.distance_travelled, "km")
+
+		return self.path, self.distance_travelled
 
 
 if __name__ == '__main__':
@@ -102,10 +104,20 @@ if __name__ == '__main__':
 	initial_location = 0
 	colony = []
 
+	colony_best = 999999999
+	best_path = []
+
 	for i in range(COLONY_SIZE):
 		colony.append(Ant(initial_location))
 
 	for ant in colony:
-		ant.march()
+		result = ant.march()		
+		if(result[1]<colony_best):
+			colony_best = result[1]
+			best_path = result[0]
+
+	print("-----------------------")
+	print("Best path:", best_path)
+	print("Distance:", colony_best)
 
 	print("Time:", time.time()-start)
