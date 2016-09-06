@@ -91,6 +91,13 @@ class Ant:
 
 if __name__ == '__main__':
 	start = time.time()
-	ant = Ant(0)
-	ant.march()
+	
+	initial_location = 0
+	colony = []
+	for i in range(COLONY_SIZE):
+		colony.append(Ant(initial_location))
+
+	for ant in colony:
+		ant.march()
+
 	print("Time:", time.time()-start)
