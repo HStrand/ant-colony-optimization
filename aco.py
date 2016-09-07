@@ -7,14 +7,14 @@ import time
 """
 Training parameters
 """
-COLONY_SIZE = 10
+COLONY_SIZE = 30
 EVAPORATION_RATE = 0.5
 Q = 20000
 INITIAL_PHEROMONE = 1
 P_RANDOM_CELL = 0.05
 ITERATIONS = 100
 
-distances = pd.read_csv('distances.csv', sep=';') # Get distances from file
+distances = pd.read_csv('distances2.csv', sep=';') # Get distances from file
 numerated = {}
 cities = distances.columns.values
 for i in range(1,len(cities)):
@@ -164,7 +164,7 @@ class Colony:
 		return grid
 
 	def deposit_pheromones(self, grid):
-		for ant in self.get_top_ants(5):
+		for ant in self.get_top_ants(int(COLONY_SIZE/2)):
 			for i in range(0,len(ant.path)-1):
 				grid[ant.path[i],ant.path[i+1]] += Q/ant.distance_travelled # Update rule
 
@@ -183,7 +183,7 @@ def evaporate(grid):
 
 def brute_force():
 	cities = []
-	initial_location = 0
+	initial_location = 4
 	for i in range(0,len(distances)):
 		if not (i==initial_location):
 			cities.append(i)
@@ -197,19 +197,19 @@ def brute_force():
 	i = 0
 	for r in combos:
 	    distance = 0    
-	    distance += get_distance(0,r[0])
+	    distance += get_distance(initial_location,r[0])
 	    
 	    for i in range(0,len(r)-1):
 	        distance += get_distance(r[i],r[i+1])        
 	        
-	    distance += get_distance(r[-1],0)
+	    distance += get_distance(r[-1],initial_location)
 	    
 	    if distance < shortest_path_distance:
 	        shortest_path_distance = distance
-	        shortest_path = [0]
+	        shortest_path = [initial_location]
 	        for i in range(0,len(r)):
 	            shortest_path.append(r[i])
-	        shortest_path.append(0)
+	        shortest_path.append(initial_location)
 
 	shortest_path = np.array(shortest_path)
 	shortest_path += 1
@@ -226,14 +226,15 @@ def brute_force():
 if __name__ == '__main__':
 	VERBOSE = False
 
-	best_solution = brute_force()
+	# best_solution = brute_force()
+	best_solution = 46508
 
 	print("--------------------------------")
 	print("Starting Ant Colony Optimization")
 	print("Number of iterations:", ITERATIONS)
 	start = time.time()
 	
-	colony = Colony(COLONY_SIZE, 0)
+	colony = Colony(COLONY_SIZE, 4)
 	global_shortest_distances = []
 	avg_distances = []
 	iterations = []
