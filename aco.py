@@ -1,19 +1,18 @@
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+import itertools
 import time
 
 """
 Training parameters
 """
 COLONY_SIZE = 10
-# ALPHA = 1
-# BETA = 5
 EVAPORATION_RATE = 0.5
 Q = 20000
 INITIAL_PHEROMONE = 1
 P_RANDOM_CELL = 0.05
-ITERATIONS = 500
+ITERATIONS = 100
 
 distances = pd.read_csv('distances.csv', sep=';') # Get distances from file
 numerated = {}
@@ -182,10 +181,56 @@ class Colony:
 def evaporate(grid):
 	return grid*(1-EVAPORATION_RATE)
 
+def brute_force():
+	cities = []
+	initial_location = 0
+	for i in range(0,len(distances)):
+		if not (i==initial_location):
+			cities.append(i)
+
+	print("---------------------------")
+	print("Starting brute-force search")
+	start = time.time()
+	shortest_path_distance = 999999999
+	shortest_path = []
+	combos = itertools.permutations(cities,len(cities))
+	i = 0
+	for r in combos:
+	    distance = 0    
+	    distance += get_distance(0,r[0])
+	    
+	    for i in range(0,len(r)-1):
+	        distance += get_distance(r[i],r[i+1])        
+	        
+	    distance += get_distance(r[-1],0)
+	    
+	    if distance < shortest_path_distance:
+	        shortest_path_distance = distance
+	        shortest_path = [0]
+	        for i in range(0,len(r)):
+	            shortest_path.append(r[i])
+	        shortest_path.append(0)
+
+	shortest_path = np.array(shortest_path)
+	shortest_path += 1
+	shortest_path = list(map(get_city_name, shortest_path))
+	        
+	print("Shortest path", shortest_path)
+	print("Shortest path distance:", shortest_path_distance, "km")
+	print("Brute-force execution time:", round(time.time()-start,3), "s")
+
+	return shortest_path_distance
+
 
 
 if __name__ == '__main__':
 	VERBOSE = False
+
+	best_solution = brute_force()
+
+	print("--------------------------------")
+	print("Starting Ant Colony Optimization")
+	print("Number of iterations:", ITERATIONS)
 	start = time.time()
 	
 	colony = Colony(COLONY_SIZE, 0)
@@ -194,7 +239,8 @@ if __name__ == '__main__':
 	iterations = []
 
 	for i in range(ITERATIONS):
-		print("Starting iteration", colony.iteration)
+		if(colony.iteration*100/ITERATIONS%10==0):
+			print(round(colony.iteration*100/ITERATIONS,0), "%")
 		colony.march()
 		avg = colony.score()
 		avg_distances.append(avg)
@@ -209,8 +255,9 @@ if __name__ == '__main__':
 	print("Shortest path found:", best_path)
 	print("Found in iteration", colony.global_shortest_iteration)
 	print("Shortest path distance:", colony.global_shortest_path_distance, "km")
+	print("Percentile:", round(best_solution*100/colony.global_shortest_path_distance,2))
 
-	print("Time:", time.time()-start)
+	print("Ant Colony Optimization execution time:", round(time.time()-start,3), "s")
 
 	iterations = np.array(iterations)
 	global_shortest_distances = np.array(global_shortest_distances)
