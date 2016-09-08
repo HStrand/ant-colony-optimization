@@ -85,7 +85,7 @@ def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, ve
 	if not iterations: iterations = 100
 	if not evaporation_rate: evaporation_rate = 0.5
 	if not Q: Q = 20000
-	if not verbosity: verbosity = 0
+	if not verbosity: verbosity = 1
 	if not pr: pr = 0.05	
 	if not initial_pheromone: initial_pheromone = 1
 
@@ -94,10 +94,11 @@ def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, ve
 	# best_solution = brute_force()
 	best_solution = 60858
 
-	print("--------------------------------")
-	print("Starting Ant Colony Optimization")
-	print("Colony size:", colony_size)
-	print("Number of iterations:", iterations)
+	if(verbosity>0):
+		print("--------------------------------")
+		print("Starting Ant Colony Optimization")
+		print("Colony size:", colony_size)
+		print("Number of iterations:", iterations)
 	start = time.time()
 	
 	colony = Colony(colony_size, 4, P, evaporation_rate, Q, pr, verbosity)
@@ -110,11 +111,12 @@ def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, ve
 	best_path = np.array(colony.global_shortest_path) + 1
 	best_path = list(map(get_city_name, best_path))
 
-	print("Shortest path found:", best_path)
-	print("Found in iteration", colony.global_shortest_iteration)
-	print("Shortest path distance:", colony.global_shortest_path_distance, "km")
-	print("Percentile:", round(best_solution*100/colony.global_shortest_path_distance,2))
-	print("Ant Colony Optimization execution time:", round(time.time()-start,3), "s")
+	if(verbosity>0):
+		print("Shortest path found:", best_path)
+		print("Found in iteration", colony.global_shortest_iteration)
+		print("Shortest path distance:", colony.global_shortest_path_distance, "km")
+		print("Percentile:", round(best_solution*100/colony.global_shortest_path_distance,2))
+		print("Ant Colony Optimization execution time:", round(time.time()-start,3), "s")
 
 	iteration_list = np.array(iteration_list)
 	global_shortest_distances = np.array(global_shortest_distances)

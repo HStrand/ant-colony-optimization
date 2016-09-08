@@ -38,7 +38,7 @@ class Colony:
 		# March the ants.
 		for ant in self.ants:
 			ant.march()
-			if self.verbosity:
+			if self.verbosity>2:
 				print("Distance:", ant.distance_travelled, "km")
 			self.paths.append(ant.path)
 			self.path_distances.append(ant.distance_travelled)
@@ -56,7 +56,7 @@ class Colony:
 		self.iteration += 1
 
 	def score(self):
-		if self.verbosity:
+		if self.verbosity>1:
 			print("-----------------------")
 			print("Shortest path:", self.shortest_path)
 			print("Shortest distance:", self.shortest_path_distance, "km")
@@ -85,8 +85,8 @@ class Colony:
 		avg_distances = []
 		iteration_list = []
 
-		for i in range(iterations):
-			if(self.iteration*100/iterations%10==0):
+		for i in range(iterations):			
+			if(self.iteration*100/iterations%10==0 and self.verbosity>0):
 				print(round(self.iteration*100/iterations,0), "%")
 			self.march()
 			avg = self.score()

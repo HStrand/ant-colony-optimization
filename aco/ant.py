@@ -1,5 +1,5 @@
 import numpy as np
-from main import get_distance
+from main import *
 
 """
 Ant class
@@ -33,7 +33,7 @@ class Ant:
 				break
 		
 		distance = get_distance(self.location, step) # Record distance travelled.
-		if self.colony.verbosity:
+		if self.colony.verbosity>2:
 			print("Travelling", distance, "km from", numerated[self.location+1], "to", numerated[step+1])
 
 		self.location = step # Move ant to the new location.
@@ -47,7 +47,7 @@ class Ant:
 
 		# Finally, move back to initial location.
 		distance = get_distance(self.location, self.initial_location)
-		if self.colony.verbosity:
+		if self.colony.verbosity>2:
 			print("Travelling", distance, "km from", numerated[self.location+1], "to", numerated[self.initial_location+1])
 		self.path.append(self.initial_location)
 		self.distance_travelled += distance
