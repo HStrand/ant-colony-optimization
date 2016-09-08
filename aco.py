@@ -7,14 +7,11 @@ import time
 """
 Training parameters
 """
-COLONY_SIZE = 30
-EVAPORATION_RATE = 0.5
-Q = 20000
 INITIAL_PHEROMONE = 1
 P_RANDOM_CELL = 0.05
-ITERATIONS = 100
 
-distances = pd.read_csv('distances2.csv', sep=';') # Get distances from file
+
+distances = pd.read_csv('distances.csv', sep=';') # Get distances from file
 numerated = {}
 cities = distances.columns.values
 for i in range(1,len(cities)):
@@ -49,12 +46,13 @@ def get_city_name(x):
 
 
 class Ant:
-	def __init__(self, initial_location):
+	def __init__(self, initial_location, colony):
 		self.path = [initial_location] # Path starts with initial location.
 		self.initial_location = initial_location
 		self.location = initial_location		
 		self.distance_travelled = 0		
-		self.get_grid()
+		self.colony = colony
+		self.get_grid()		
 		""" 
 		The ant gets a copy of the transition matrix. 
 		This is also used to keep track of the places the ant has visited. 
@@ -97,16 +95,14 @@ class Ant:
 		self.location = self.initial_location
 
 	def get_grid(self):
-		self.matrix = np.empty_like(P)
-		self.matrix[:] = P
+		self.matrix = np.empty_like(self.colony.grid)
+		self.matrix[:] = self.colony.grid
 		self.matrix[:,self.location]=0 # Prevent the ant from moving back to the initial location until the last step.
 
 
 class Colony:
-	def __init__(self, colony_size, initial_location):
-		self.ants = []
-		for i in range(colony_size):
-			self.ants.append(Ant(initial_location))		
+	def __init__(self, colony_size, initial_location, grid):	
+		self.colony_size = colony_size
 		self.paths = []
 		self.path_distances = []
 		self.shortest_path = []
@@ -116,6 +112,10 @@ class Colony:
 		self.global_shortest_iteration = 0
 		self.initial_location = initial_location
 		self.iteration = 1
+		self.grid = grid
+		self.ants = []
+		for i in range(colony_size):
+			self.ants.append(Ant(initial_location, self))	
 
 	def march(self):
 		# Reset stored iteration values.
@@ -125,7 +125,7 @@ class Colony:
 			self.shortest_path = []
 			self.shortest_path_distance = 999999999
 			for ant in self.ants:
-				ant.__init__(self.initial_location) # Ants have no memory.
+				ant.__init__(self.initial_location, self) # Ants have no memory.
 
 		# March the ants.
 		for ant in self.ants:
@@ -157,33 +157,39 @@ class Colony:
 
 		return round(np.mean(self.path_distances),2)
 
-	def update_pheromone_trail(self, grid):
-		grid = evaporate(grid)
-		grid = self.deposit_pheromones(grid)
-
-		return grid
-
-	def deposit_pheromones(self, grid):
+	def update_pheromone_trail(self):
+		# Evaporate
+		self.grid = self.grid*(1-EVAPORATION_RATE)
+		
+		self.deposit_pheromones()
+		"""
+		# Deposit pheromones
 		for ant in self.get_top_ants(int(COLONY_SIZE/2)):
 			for i in range(0,len(ant.path)-1):
-				grid[ant.path[i],ant.path[i+1]] += Q/ant.distance_travelled # Update rule
+				self.grid[ant.path[i],ant.path[i+1]] += Q/ant.distance_travelled # Update rule
 
-		grid += P_RANDOM_CELL # All edges receive a small amount of pheromones to ensure some randomness
-		grid = grid * INVERSE_IDENTITY # Remove self-loops to nodes
+		self.grid += P_RANDOM_CELL # All edges receive a small amount of pheromones to ensure some randomness
+		self.grid = self.grid * INVERSE_IDENTITY # Remove self-loops to nodes		
+		"""
 
-		return grid
+	def deposit_pheromones(self):
+		for ant in self.get_top_ants(int(self.colony_size/2)):
+			for i in range(0,len(ant.path)-1):
+				self.grid[ant.path[i],ant.path[i+1]] += Q/ant.distance_travelled # Update rule
+
+		self.grid += P_RANDOM_CELL # All edges receive a small amount of pheromones to ensure some randomness
+		self.grid = self.grid * INVERSE_IDENTITY # Remove self-loops to nodes
+
+	def evaporate():
+		self.grid = self.grid*(1-EVAPORATION_RATE)
 
 	def get_top_ants(self, count):
-		sorted_ants = sorted(colony.ants, key=lambda x: x.distance_travelled, reverse=False)
+		sorted_ants = sorted(self.ants, key=lambda x: x.distance_travelled, reverse=False)
 		return sorted_ants[:count]
 
 
-def evaporate(grid):
-	return grid*(1-EVAPORATION_RATE)
-
-def brute_force():
+def brute_force(initial_location):
 	cities = []
-	initial_location = 4
 	for i in range(0,len(distances)):
 		if not (i==initial_location):
 			cities.append(i)
@@ -222,32 +228,49 @@ def brute_force():
 	return shortest_path_distance
 
 
+def main(verbosity, colony_size, iterations, evaporation_rate, q):
+	if not verbosity: verbosity = False
+	if verbosity == 1: verbosity = True
+	elif verbosity == 0: verbosity = False
+	if not colony_size: colony_size = 30
+	if not iterations: iterations = 100
+	if not evaporation_rate: evaporation_rate = 0.5
+	if not q: q = 20000
 
-if __name__ == '__main__':
-	VERBOSE = False
+	global VERBOSE
+	VERBOSE = verbosity
 
-	# best_solution = brute_force()
-	best_solution = 46508
+	global EVAPORATION_RATE
+	EVAPORATION_RATE = evaporation_rate
+
+	global Q
+	Q = q
+
+	initial_location = 0
+
+	# best_solution = brute_force(initial_location
+	best_solution = 60858
 
 	print("--------------------------------")
 	print("Starting Ant Colony Optimization")
-	print("Number of iterations:", ITERATIONS)
+	print("Colony size:", colony_size)
+	print("Number of iterations:", iterations)
 	start = time.time()
 	
-	colony = Colony(COLONY_SIZE, 4)
+	colony = Colony(colony_size, initial_location, P)
 	global_shortest_distances = []
 	avg_distances = []
-	iterations = []
+	iteration_list = []
 
-	for i in range(ITERATIONS):
-		if(colony.iteration*100/ITERATIONS%10==0):
-			print(round(colony.iteration*100/ITERATIONS,0), "%")
+	for i in range(iterations):
+		if(colony.iteration*100/iterations%10==0):
+			print(round(colony.iteration*100/iterations,0), "%")
 		colony.march()
 		avg = colony.score()
 		avg_distances.append(avg)
 		global_shortest_distances.append(colony.global_shortest_path_distance)
-		iterations.append(i)
-		P = colony.update_pheromone_trail(P)
+		iteration_list.append(i)
+		colony.update_pheromone_trail()
 
 	best_path = np.array(colony.global_shortest_path)
 	best_path += 1
@@ -260,8 +283,20 @@ if __name__ == '__main__':
 
 	print("Ant Colony Optimization execution time:", round(time.time()-start,3), "s")
 
-	iterations = np.array(iterations)
+	iteration_list = np.array(iteration_list)
 	global_shortest_distances = np.array(global_shortest_distances)
-	plt.plot(iterations, global_shortest_distances)
-	plt.plot(iterations, avg_distances)
+	plt.plot(iteration_list, global_shortest_distances)
+	plt.plot(iteration_list, avg_distances)
 	plt.show()
+
+
+if __name__ == '__main__':
+	import argparse
+	parser = argparse.ArgumentParser(description="Ant Colony Optimization")
+	parser.add_argument("-v", type=int, help="Verbose level.")
+	parser.add_argument("-c", type=int, help="Colony size.")
+	parser.add_argument("-i", type=int, help="Number of iterations.")
+	parser.add_argument("-er", type=float, help="Evaporation rate.")
+	parser.add_argument("-q", type=int, help="Constant parameter Q.")
+	args = parser.parse_args()
+	main(args.v, args.c, args.i, args.er, args.q)
