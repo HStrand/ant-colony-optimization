@@ -1,5 +1,3 @@
-import numpy as np
-import pandas as pd
 from .ant import Ant
 from main import *
 

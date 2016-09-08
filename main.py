@@ -6,6 +6,9 @@ import time
 from aco.colony import *
 from aco.ant import *
 
+"""
+Import data
+"""
 distances = pd.read_csv('data/distances.csv', sep=';') # Get distances from file
 numerated = {}
 cities = distances.columns.values
@@ -13,6 +16,23 @@ for i in range(1,len(cities)):
     numerated[i] = cities[i]
 
 INVERSE_IDENTITY = 1 - np.identity(len(distances)) # Inverse identity matrix
+
+"""
+Helper functions
+"""
+def get_row_by_num(num):
+	return np.array(distances)[num,1:]
+
+def get_distance(a, b):
+	return get_row_by_num(a)[b]
+
+def get_city_name(x):
+    return numerated[x]
+
+def generate_matrix(initial_pheromone):
+	P = np.array([[initial_pheromone]*len(distances)]*len(distances)) # Initial transition matrix	
+	P = P * INVERSE_IDENTITY # Set diagonal to 0 to avoid transitionss to current state
+	return P
 
 """
 Brute-force search algorithm
@@ -58,23 +78,6 @@ def brute_force():
 	return shortest_path_distance
 
 """
-Helper functions
-"""
-def get_row_by_num(num):
-	return np.array(distances)[num,1:]
-
-def get_distance(a, b):
-	return get_row_by_num(a)[b]
-
-def get_city_name(x):
-    return numerated[x]
-
-def generate_matrix(initial_pheromone):
-	P = np.array([[initial_pheromone]*len(distances)]*len(distances)) # Initial transition matrix	
-	P = P * INVERSE_IDENTITY # Set diagonal to 0 to avoid transitionss to current state
-	return P
-
-"""
 Main program
 """
 def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, verbosity):
@@ -93,6 +96,7 @@ def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, ve
 
 	print("--------------------------------")
 	print("Starting Ant Colony Optimization")
+	print("Colony size:", colony_size)
 	print("Number of iterations:", iterations)
 	start = time.time()
 	
