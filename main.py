@@ -37,9 +37,8 @@ def generate_matrix(initial_pheromone):
 """
 Brute-force search algorithm
 """
-def brute_force():
+def brute_force(initial_location):
 	cities = []
-	initial_location = 4
 	for i in range(0,len(distances)):
 		if not (i==initial_location):
 			cities.append(i)
@@ -80,7 +79,7 @@ def brute_force():
 """
 Main program
 """
-def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, verbosity):
+def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, initial_location, verbosity):
 	if not colony_size: colony_size = 30
 	if not iterations: iterations = 100
 	if not evaporation_rate: evaporation_rate = 0.5
@@ -88,10 +87,11 @@ def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, ve
 	if not verbosity: verbosity = 1
 	if not pr: pr = 0.05	
 	if not initial_pheromone: initial_pheromone = 1
+	if not initial_location: initial_location = 0
 
 	P = generate_matrix(initial_pheromone)
 
-	# best_solution = brute_force()
+	# best_solution = brute_force(initial_location)
 	best_solution = 60858
 
 	if(verbosity>0):
@@ -101,7 +101,7 @@ def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, ve
 		print("Number of iterations:", iterations)
 	start = time.time()
 	
-	colony = Colony(colony_size, 4, P, evaporation_rate, Q, pr, verbosity)
+	colony = Colony(colony_size, initial_location, P, evaporation_rate, Q, pr, verbosity)
 	results = colony.run_simulation(iterations)
 
 	global_shortest_distances = results[0]
@@ -134,6 +134,7 @@ if __name__ == '__main__':
 	parser.add_argument("-q", type=int, help="Training parameter Q, amount of pheromones shared by ants.")
 	parser.add_argument("-pr", type=int, help="Pheromone deposit to all edges in pheromone update.")
 	parser.add_argument("-ip", type=int, help="Initial pheromone level.")
+	parser.add_argument("-l", type=int, help="Initial location.")
 	parser.add_argument("-v", type=int, help="Verbosity level (0 = no text, 1 = some text, 2 = all text).")	
 	args = parser.parse_args()
-	main(args.c, args.i, args.er, args.q, args.pr, args.ip, args.v)
+	main(args.c, args.i, args.er, args.q, args.pr, args.ip, args.l, args.v)
