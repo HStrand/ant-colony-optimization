@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import itertools
-import time
 from aco.colony import *
 from aco.ant import *
 
@@ -79,8 +78,9 @@ def brute_force(initial_location):
 """
 Main program
 """
-def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, initial_location, verbosity):
+def main(colony_size, simulations, iterations, evaporation_rate, Q, pr, initial_pheromone, initial_location, verbosity, plot):
 	if not colony_size: colony_size = 30
+	if not simulations: simulations = 1
 	if not iterations: iterations = 100
 	if not evaporation_rate: evaporation_rate = 0.5
 	if not Q: Q = 20000
@@ -88,53 +88,53 @@ def main(colony_size, iterations, evaporation_rate, Q, pr, initial_pheromone, in
 	if not pr: pr = 0.05	
 	if not initial_pheromone: initial_pheromone = 1
 	if not initial_location: initial_location = 0
+	if not plot: plot = 0
 
 	P = generate_matrix(initial_pheromone)
 
 	# best_solution = brute_force(initial_location)
 	best_solution = 60858
-
-	if(verbosity>0):
-		print("--------------------------------")
-		print("Starting Ant Colony Optimization")
-		print("Colony size:", colony_size)
-		print("Number of iterations:", iterations)
-	start = time.time()
 	
-	colony = Colony(colony_size, initial_location, P, evaporation_rate, Q, pr, verbosity)
-	results = colony.run_simulation(iterations)
+	colony = Colony(colony_size, initial_location, P, evaporation_rate, Q, pr, verbosity, plot)
+	
+	percentiles = []
+	found_iterations = []
+	execution_times = []
 
-	global_shortest_distances = results[0]
-	avg_distances = results[1]
-	iteration_list = results[2]
+	for i in range(simulations):
+		if verbosity>0:
+			print("--------------------------------")
+			print("Starting Ant Colony Optimization run", i+1, "of", simulations)
+		
+		results = colony.run_simulation(iterations, best_solution)	
+		
+		percentiles.append(results[0])	
+		found_iterations.append(results[1])
+		execution_times.append(results[2])
+		colony.__init__(colony_size, initial_location, P, evaporation_rate, Q, pr, verbosity, plot)
 
-	best_path = np.array(colony.global_shortest_path) + 1
-	best_path = list(map(get_city_name, best_path))
-
-	if(verbosity>0):
-		print("Shortest path found:", best_path)
-		print("Found in iteration", colony.global_shortest_iteration)
-		print("Shortest path distance:", colony.global_shortest_path_distance, "km")
-		print("Percentile:", round(best_solution*100/colony.global_shortest_path_distance,2))
-		print("Ant Colony Optimization execution time:", round(time.time()-start,3), "s")
-
-	iteration_list = np.array(iteration_list)
-	global_shortest_distances = np.array(global_shortest_distances)
-	plt.plot(iteration_list, global_shortest_distances)
-	plt.plot(iteration_list, avg_distances)
-	plt.show()
+	if verbosity>0:
+		print("------------------------------------------")
+		print("Simulation runs:", len(percentiles))
+		print("Iterations per run:", iterations)
+		print("Colony size:", colony_size)
+		print("Mean percentile:", np.mean(percentiles))
+		print("Mean iteration for best solution:", np.mean(found_iterations))
+		print("Mean execution time:", np.mean(execution_times))
 
 
 if __name__ == '__main__':
 	import argparse
 	parser = argparse.ArgumentParser(description="Ant Colony Optimization")
 	parser.add_argument("-c", type=int, help="Colony size.")
-	parser.add_argument("-i", type=int, help="Number of iterations.")
+	parser.add_argument("-s", type=int, help="Number of simulation runs.")
+	parser.add_argument("-i", type=int, help="Number of iterations per simulation.")
 	parser.add_argument("-er", type=float, help="Evaporation rate, how quickly the pheromone evaporates.")
 	parser.add_argument("-q", type=int, help="Training parameter Q, amount of pheromones shared by ants.")
 	parser.add_argument("-pr", type=int, help="Pheromone deposit to all edges in pheromone update.")
 	parser.add_argument("-ip", type=int, help="Initial pheromone level.")
 	parser.add_argument("-l", type=int, help="Initial location.")
-	parser.add_argument("-v", type=int, help="Verbosity level (0 = no text, 1 = some text, 2 = all text).")	
+	parser.add_argument("-v", type=int, help="Verbosity level (0 = no text, 1 = some text, 2 = all text).")
+	parser.add_argument("-plt", type=int, help="Add plot (0 = no plot, 1 = plot)")
 	args = parser.parse_args()
-	main(args.c, args.i, args.er, args.q, args.pr, args.ip, args.l, args.v)
+	main(args.c, args.s, args.i, args.er, args.q, args.pr, args.ip, args.l, args.v, args.plt)

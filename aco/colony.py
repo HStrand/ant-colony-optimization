@@ -1,3 +1,4 @@
+import time
 from .ant import Ant
 from main import *
 
@@ -5,13 +6,14 @@ from main import *
 Ant Colony class
 """
 class Colony:
-	def __init__(self, colony_size, initial_location, grid, evaporation_rate, Q, pr, verbosity):
+	def __init__(self, colony_size, initial_location, grid, evaporation_rate, Q, pr, verbosity, plot):
 		self.colony_size = colony_size
 		self.grid = grid
 		self.evaporation_rate = evaporation_rate
 		self.Q = Q
 		self.pr = pr
 		self.verbosity = verbosity
+		self.plot = plot
 		self.paths = []
 		self.path_distances = []
 		self.shortest_path = []
@@ -80,13 +82,13 @@ class Colony:
 		sorted_ants = sorted(self.ants, key=lambda x: x.distance_travelled, reverse=False)
 		return sorted_ants[:count]
 
-	def run_simulation(self, iterations):
+	def simulate(self, iterations):
 		global_shortest_distances = []
 		avg_distances = []
 		iteration_list = []
 
 		for i in range(iterations):			
-			if(self.iteration*100/iterations%10==0 and self.verbosity>0):
+			if(self.iteration*100/iterations%10==0 and self.verbosity>1):
 				print(round(self.iteration*100/iterations,0), "%")
 			self.march()
 			avg = self.score()
@@ -96,3 +98,38 @@ class Colony:
 			self.update_pheromone_trail()
 
 		return global_shortest_distances, avg_distances, iteration_list
+
+	def run_simulation(self, iterations, best_solution):
+		start = time.time()
+
+		if(self.verbosity>0):
+			print("Colony size:", self.colony_size)
+			print("Number of iterations:", iterations)	
+
+		results = self.simulate(iterations)
+
+		global_shortest_distances = results[0]
+		avg_distances = results[1]
+		iteration_list = results[2]
+
+		best_path = np.array(self.global_shortest_path) + 1
+		best_path = list(map(get_city_name, best_path))
+
+		percentile = round(best_solution*100/self.global_shortest_path_distance,2)
+		execution_time = round(time.time()-start,3)
+
+		if(self.verbosity>0):
+			print("Shortest path found:", best_path)
+			print("Found in iteration", self.global_shortest_iteration)
+			print("Shortest path distance:", self.global_shortest_path_distance, "km")
+			print("Percentile:", percentile)
+			print("Ant Colony Optimization execution time:", execution_time, "s")
+
+		if(self.plot):
+			iteration_list = np.array(iteration_list)
+			global_shortest_distances = np.array(global_shortest_distances)
+			plt.plot(iteration_list, global_shortest_distances)
+			plt.plot(iteration_list, avg_distances)
+			plt.show()
+
+		return percentile, self.global_shortest_iteration, execution_time
